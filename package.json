@@ -1,0 +1,25 @@
+{
+  "name": "conceitos-node",
+  "version": "1.0.0",
+  "description": "Projeto de conceitos para entender o Node",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "server.js"
+  },
+  "author": "Gabriel Sena",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.5.0",
+    "@prisma/client": "^6.19.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongodb": "^7.1.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "prisma": "^6.19.2"
+  }
+}
