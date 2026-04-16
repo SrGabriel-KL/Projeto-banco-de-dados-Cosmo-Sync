@@ -203,14 +203,3 @@ app.listen(3000, () => {
 })
 
 
-/*
-MongoDB
-
-
-gabriel_sena
-
-http://localhost:3000
-
-xZN6gNCJF5h3DEjH
-
-*/
