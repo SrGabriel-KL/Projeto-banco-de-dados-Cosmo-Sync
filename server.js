@@ -8,13 +8,13 @@ const prisma = new PrismaClient()
 app.use(cors())
 app.use(express.json())
 
+// ================== GET USERS ==================
 app.get("/usuarios", async (request, response) => {
   try {
     const users = await prisma.user.findMany()
     return response.status(200).json(users)
   } catch (error) {
     console.error("Erro ao buscar usuários:", error)
-
     return response.status(500).json({
       error: "Erro ao buscar usuários",
       details: error.message
@@ -22,11 +22,13 @@ app.get("/usuarios", async (request, response) => {
   }
 })
 
+// ================== CREATE USER ==================
 app.post("/usuarios", async (request, response) => {
   try {
-    console.log("BODY:", request.body)
+    let { email, age, name, password, avatarId } = request.body
 
-    const { email, age, name, password, avatarId } = request.body
+    // 🔥 normaliza email
+    email = email.trim().toLowerCase()
 
     const user = await prisma.user.create({
       data: {
@@ -41,16 +43,14 @@ app.post("/usuarios", async (request, response) => {
     return response.status(201).json(user)
   } catch (error) {
     console.error("Erro ao criar usuário:", error)
-
     return response.status(500).json({
       error: "Erro ao criar usuário",
       details: error.message
     })
-    
   }
-  
 })
 
+// ================== LOGIN ==================
 app.post("/login", async (request, response) => {
   try {
     const { name, password } = request.body
@@ -85,16 +85,12 @@ app.post("/login", async (request, response) => {
   }
 })
 
-
-
-
-
+// ================== UPDATE USER ==================
 app.put("/usuarios/:id", async (request, response) => {
   try {
-    console.log("ID:", request.params.id)
-    console.log("BODY:", request.body)
+    let { email, age, name, password, avatarId } = request.body
 
-    const { email, age, name, password, avatarId } = request.body
+    email = email.trim().toLowerCase()
 
     const user = await prisma.user.update({
       where: {
@@ -112,7 +108,6 @@ app.put("/usuarios/:id", async (request, response) => {
     return response.status(200).json(user)
   } catch (error) {
     console.error("ERRO PUT:", error)
-
     return response.status(500).json({
       error: "Erro ao atualizar usuário",
       details: error.message
@@ -120,8 +115,7 @@ app.put("/usuarios/:id", async (request, response) => {
   }
 })
 
-
-
+// ================== DELETE ==================
 app.delete("/usuarios/:id", async (request, response) => {
   try {
     await prisma.user.delete({
@@ -135,21 +129,26 @@ app.delete("/usuarios/:id", async (request, response) => {
     })
   } catch (error) {
     console.error("Erro ao deletar usuário:", error)
-
     return response.status(500).json({
       error: "Erro ao deletar usuário"
     })
   }
 })
 
-
-
+// ================== RECUPERAR SENHA ==================
 app.post("/recuperar-senha", async (request, response) => {
   try {
-    const { email } = request.body
+    let { email } = request.body
 
-    const user = await prisma.user.findUnique({
-      where: { email }
+    // 🔥 normaliza
+    email = email.trim().toLowerCase()
+
+    console.log("EMAIL RECEBIDO:", email)
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email: email
+      }
     })
 
     if (!user) {
@@ -163,21 +162,34 @@ app.post("/recuperar-senha", async (request, response) => {
     })
   } catch (error) {
     console.error("Erro ao validar email:", error)
-
     return response.status(500).json({
       message: "Erro interno do servidor"
     })
   }
 })
 
-
+// ================== ATUALIZAR SENHA ==================
 app.put("/atualizar-senha", async (request, response) => {
   try {
-    const { email, novaSenha } = request.body
+    let { email, novaSenha } = request.body
 
-    const user = await prisma.user.update({
+    email = email.trim().toLowerCase()
+
+    const user = await prisma.user.findFirst({
       where: {
         email: email
+      }
+    })
+
+    if (!user) {
+      return response.status(404).json({
+        message: "Usuário não encontrado"
+      })
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: user.id
       },
       data: {
         password: novaSenha
@@ -186,22 +198,19 @@ app.put("/atualizar-senha", async (request, response) => {
 
     return response.status(200).json({
       message: "Senha atualizada com sucesso",
-      user
+      user: updatedUser
     })
   } catch (error) {
     console.error("Erro ao atualizar senha:", error)
-
     return response.status(500).json({
       message: "Erro ao atualizar senha"
     })
   }
 })
 
-
-
-
+// ================== SERVER ==================
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT} com Sucesso! `)
+  console.log(`🚀 Servidor rodando na porta ${PORT}`)
 })
