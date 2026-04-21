@@ -198,8 +198,10 @@ app.put("/atualizar-senha", async (request, response) => {
 })
 
 
-app.listen(3000, () => {
-  console.log("🚀 Servidor rodando na porta 3000 com Sucesso!.")
+
+
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT} com Sucesso! `)
 })
-
-

@@ -1,11 +1,11 @@
 {
   "name": "conceitos-node",
   "version": "1.0.0",
-  "description": "Projeto de conceitos para entender o Node",
+  "description": "Backend projeto Cosmo Sync",
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "server.js"
+    "start": "node server.js"
   },
   "author": "Gabriel Sena",
   "license": "ISC",
