@@ -9,13 +9,12 @@ app.use(cors())
 app.use(express.json())
 
 // ================== GET USERS ==================
-app.get("/usuarios", async (request, response) => {
+app.get("/usuarios", async (req, res) => {
   try {
     const users = await prisma.user.findMany()
-    return response.status(200).json(users)
+    return res.status(200).json(users)
   } catch (error) {
-    console.error("Erro ao buscar usuários:", error)
-    return response.status(500).json({
+    return res.status(500).json({
       error: "Erro ao buscar usuários",
       details: error.message
     })
@@ -23,12 +22,28 @@ app.get("/usuarios", async (request, response) => {
 })
 
 // ================== CREATE USER ==================
-app.post("/usuarios", async (request, response) => {
+app.post("/usuarios", async (req, res) => {
   try {
-    let { email, age, name, password, avatarId } = request.body
+    let { email, age, name, password, avatarId } = req.body
 
-    // 🔥 normaliza email
+    if (!email || !name || !password) {
+      return res.status(400).json({
+        error: "Preencha todos os campos obrigatórios"
+      })
+    }
+
     email = email.trim().toLowerCase()
+
+    // 🔥 verifica email duplicado
+    const userExists = await prisma.user.findFirst({
+      where: { email }
+    })
+
+    if (userExists) {
+      return res.status(400).json({
+        error: "Email já cadastrado"
+      })
+    }
 
     const user = await prisma.user.create({
       data: {
@@ -40,24 +55,23 @@ app.post("/usuarios", async (request, response) => {
       }
     })
 
-    return response.status(201).json(user)
+    return res.status(201).json(user)
   } catch (error) {
-    console.error("Erro ao criar usuário:", error)
-    return response.status(500).json({
+    return res.status(500).json({
       error: "Erro ao criar usuário",
       details: error.message
     })
   }
 })
 
-// ================== LOGIN ==================
-app.post("/login", async (request, response) => {
+// ================== LOGIN (NAME + PASSWORD) ==================
+app.post("/login", async (req, res) => {
   try {
-    const { name, password } = request.body
+    const { name, password } = req.body
 
     if (!name || !password) {
-      return response.status(400).json({
-        error: "Preencha login e senha"
+      return res.status(400).json({
+        error: "Preencha nome e senha"
       })
     }
 
@@ -69,33 +83,31 @@ app.post("/login", async (request, response) => {
     })
 
     if (!user) {
-      return response.status(401).json({
-        error: "Login ou senha inválidos"
+      return res.status(401).json({
+        error: "Nome ou senha inválidos"
       })
     }
 
-    return response.status(200).json({
+    return res.status(200).json({
       message: "Login realizado com sucesso",
       user
     })
   } catch (error) {
-    return response.status(500).json({
+    return res.status(500).json({
       error: "Erro no login"
     })
   }
 })
 
 // ================== UPDATE USER ==================
-app.put("/usuarios/:id", async (request, response) => {
+app.put("/usuarios/:id", async (req, res) => {
   try {
-    let { email, age, name, password, avatarId } = request.body
+    let { email, age, name, password, avatarId } = req.body
 
     email = email.trim().toLowerCase()
 
     const user = await prisma.user.update({
-      where: {
-        id: request.params.id
-      },
+      where: { id: req.params.id },
       data: {
         email,
         age: Number(age),
@@ -105,10 +117,9 @@ app.put("/usuarios/:id", async (request, response) => {
       }
     })
 
-    return response.status(200).json(user)
+    return res.status(200).json(user)
   } catch (error) {
-    console.error("ERRO PUT:", error)
-    return response.status(500).json({
+    return res.status(500).json({
       error: "Erro ao atualizar usuário",
       details: error.message
     })
@@ -116,93 +127,90 @@ app.put("/usuarios/:id", async (request, response) => {
 })
 
 // ================== DELETE ==================
-app.delete("/usuarios/:id", async (request, response) => {
+app.delete("/usuarios/:id", async (req, res) => {
   try {
     await prisma.user.delete({
-      where: {
-        id: request.params.id
-      }
+      where: { id: req.params.id }
     })
 
-    return response.status(200).json({
+    return res.status(200).json({
       message: "Usuário deletado com sucesso!"
     })
   } catch (error) {
-    console.error("Erro ao deletar usuário:", error)
-    return response.status(500).json({
+    return res.status(500).json({
       error: "Erro ao deletar usuário"
     })
   }
 })
 
 // ================== RECUPERAR SENHA ==================
-app.post("/recuperar-senha", async (request, response) => {
+app.post("/recuperar-senha", async (req, res) => {
   try {
-    let { email } = request.body
+    let { email } = req.body
 
-    // 🔥 normaliza
+    if (!email) {
+      return res.status(400).json({
+        message: "Email é obrigatório"
+      })
+    }
+
     email = email.trim().toLowerCase()
 
-    console.log("EMAIL RECEBIDO:", email)
-
     const user = await prisma.user.findFirst({
-      where: {
-        email: email
-      }
+      where: { email }
     })
 
     if (!user) {
-      return response.status(404).json({
+      return res.status(404).json({
         message: "Email não encontrado"
       })
     }
 
-    return response.status(200).json({
+    return res.status(200).json({
       message: "Email válido"
     })
   } catch (error) {
-    console.error("Erro ao validar email:", error)
-    return response.status(500).json({
+    return res.status(500).json({
       message: "Erro interno do servidor"
     })
   }
 })
 
 // ================== ATUALIZAR SENHA ==================
-app.put("/atualizar-senha", async (request, response) => {
+app.put("/atualizar-senha", async (req, res) => {
   try {
-    let { email, novaSenha } = request.body
+    let { email, novaSenha } = req.body
+
+    if (!email || !novaSenha) {
+      return res.status(400).json({
+        message: "Email e nova senha são obrigatórios"
+      })
+    }
 
     email = email.trim().toLowerCase()
 
     const user = await prisma.user.findFirst({
-      where: {
-        email: email
-      }
+      where: { email }
     })
 
     if (!user) {
-      return response.status(404).json({
+      return res.status(404).json({
         message: "Usuário não encontrado"
       })
     }
 
-    const updatedUser = await prisma.user.update({
-      where: {
-        id: user.id
-      },
+    await prisma.user.update({
+      where: { id: user.id },
       data: {
         password: novaSenha
       }
     })
 
-    return response.status(200).json({
-      message: "Senha atualizada com sucesso",
-      user: updatedUser
+    return res.status(200).json({
+      message: "Senha atualizada com sucesso"
     })
   } catch (error) {
-    console.error("Erro ao atualizar senha:", error)
-    return response.status(500).json({
+    return res.status(500).json({
       message: "Erro ao atualizar senha"
     })
   }
